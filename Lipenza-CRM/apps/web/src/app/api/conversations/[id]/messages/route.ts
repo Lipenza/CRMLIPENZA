@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser, unauthorized, forbidden } from '@/lib/auth-server';
 import { prisma } from '@/lib/prisma';
 import { sendWhatsAppMessage, sendWhatsAppTemplate } from '@/services/whatsapp';
+import { credsForAccount } from '@/lib/meta-accounts';
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const user = await getAuthUser(req);
@@ -38,9 +39,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   let sendError: string | null = null;
   if (!isInternal && conversation.channel === 'WHATSAPP') {
     try {
+      // Responder SIEMPRE desde la línea (número) dueña de la conversación.
+      const creds = await credsForAccount(conversation.metaAccountId);
       const result = template?.name
-        ? await sendWhatsAppTemplate(conversation.customer.phone, template.name, template.language || 'es', template.params || [])
-        : await sendWhatsAppMessage(conversation.customer.phone, content);
+        ? await sendWhatsAppTemplate(conversation.customer.phone, template.name, template.language || 'es', template.params || [], creds)
+        : await sendWhatsAppMessage(conversation.customer.phone, content, creds);
       const wamid = result?.messages?.[0]?.id;
       if (wamid) {
         message = await prisma.message.update({

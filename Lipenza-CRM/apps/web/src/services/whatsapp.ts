@@ -1,22 +1,36 @@
 const BASE_URL = 'https://graph.facebook.com/v23.0';
 
-export async function sendWhatsAppMessage(to: string, body: string, templateName?: string) {
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+/**
+ * Credenciales de UN número de WhatsApp. Multi-número: cada línea trae las suyas
+ * (desde la tabla meta_accounts). Si no se pasan, cae a las variables de entorno
+ * (compatibilidad con la configuración de un solo número).
+ */
+export interface WaCreds {
+  phoneNumberId?: string | null;
+  token?: string | null;
+  wabaId?: string | null;
+}
+
+function resolve(creds?: WaCreds) {
+  return {
+    phoneNumberId: creds?.phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID,
+    token:         creds?.token         || process.env.WHATSAPP_ACCESS_TOKEN,
+    wabaId:        creds?.wabaId         || process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
+  };
+}
+
+export async function sendWhatsAppMessage(to: string, body: string, creds?: WaCreds) {
+  const { phoneNumberId, token } = resolve(creds);
 
   if (!phoneNumberId || !token) {
     console.warn('[WhatsApp] No configurado — mensaje no enviado');
     return null;
   }
 
-  const payload = templateName
-    ? { messaging_product: 'whatsapp', to, type: 'template', template: { name: templateName, language: { code: 'es' } } }
-    : { messaging_product: 'whatsapp', to, type: 'text', text: { body } };
-
   const res = await fetch(`${BASE_URL}/${phoneNumberId}/messages`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ messaging_product: 'whatsapp', to, type: 'text', text: { body } }),
   });
 
   const data = await res.json();
@@ -32,10 +46,9 @@ export async function sendWhatsAppMessage(to: string, body: string, templateName
 // Envía una plantilla APROBADA (type: template). Funciona fuera de la ventana de 24h,
 // a diferencia del texto libre. bodyParams son los valores para {{1}}, {{2}}… en orden.
 export async function sendWhatsAppTemplate(
-  to: string, name: string, language: string, bodyParams: string[] = [],
+  to: string, name: string, language: string, bodyParams: string[] = [], creds?: WaCreds,
 ) {
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  const { phoneNumberId, token } = resolve(creds);
   if (!phoneNumberId || !token) {
     console.warn('[WhatsApp] No configurado — plantilla no enviada');
     return null;
@@ -72,9 +85,8 @@ export interface MetaTemplate {
   components?: { type: string; text?: string }[];
 }
 
-export async function fetchMetaTemplates(): Promise<MetaTemplate[] | null> {
-  const wabaId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
-  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+export async function fetchMetaTemplates(creds?: WaCreds): Promise<MetaTemplate[] | null> {
+  const { wabaId, token } = resolve(creds);
   if (!wabaId || !token) return null;
 
   const templates: MetaTemplate[] = [];
@@ -107,10 +119,9 @@ export interface CreateTemplateInput {
 // Crea la plantilla en la WABA y la deja en revisión de Meta.
 // Devuelve el id y estado que asigna Meta (normalmente PENDING).
 export async function createMetaTemplate(
-  input: CreateTemplateInput,
+  input: CreateTemplateInput, creds?: WaCreds,
 ): Promise<{ id: string; status: string; category: string }> {
-  const wabaId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
-  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  const { wabaId, token } = resolve(creds);
   if (!wabaId || !token) throw new Error('WhatsApp no está configurado');
 
   const components: Record<string, unknown>[] = [];
@@ -152,9 +163,8 @@ export async function createMetaTemplate(
   return { id: data.id, status: data.status, category: data.category };
 }
 
-export async function markMessageRead(messageId: string) {
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+export async function markMessageRead(messageId: string, creds?: WaCreds) {
+  const { phoneNumberId, token } = resolve(creds);
   if (!phoneNumberId || !token) return;
 
   await fetch(`${BASE_URL}/${phoneNumberId}/messages`, {

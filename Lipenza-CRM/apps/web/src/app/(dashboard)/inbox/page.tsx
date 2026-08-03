@@ -33,8 +33,12 @@ interface Conversation {
   lastMessageAt: string | null;
   customer: CustomerInfo;
   agent?: { id: string; name: string } | null;
+  metaAccountId?: string | null;
+  metaAccount?: { id: string; accountName: string | null } | null;
   messages: Message[];
 }
+
+interface WaLine { id: string; accountName: string | null; phoneNumber: string | null; }
 
 const CH = {
   WHATSAPP: { label: 'WhatsApp', short: 'WA', icon: MessageSquare,
@@ -145,6 +149,8 @@ export default function InboxPage() {
   const [sending,  setSending]  = useState(false);
   const [tab,      setTab]      = useState<'pending' | 'all' | 'resolved'>('pending');
   const [filterCh, setFilterCh] = useState<Channel | ''>('');
+  const [lines,    setLines]    = useState<WaLine[]>([]);
+  const [activeLine, setActiveLine] = useState<string>(''); // '' = todas las líneas
   const [search,   setSearch]   = useState('');
   const [msg,      setMsg]      = useState('');
   const [internal, setInternal] = useState(false);
@@ -196,6 +202,14 @@ export default function InboxPage() {
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [sel?.id, sel?.messages.length]);
 
+  // Líneas de WhatsApp = bandejas (Servicio al Cliente / Recompra / Logístico).
+  // Si aún no hay líneas registradas, la bandeja funciona unificada.
+  useEffect(() => {
+    api.get<{ data: WaLine[] }>('/api/meta-accounts')
+      .then(r => setLines(r.data || []))
+      .catch(() => {});
+  }, []);
+
   // Plantillas reales para el selector "/" (aprobadas primero).
   // Si la BD está vacía (arranque en frío), sincroniza con Meta y reintenta.
   useEffect(() => {
@@ -234,8 +248,11 @@ export default function InboxPage() {
     setTplIndex(0);
   }
 
-  const pending  = convs.filter(isWaiting);
+  const inLine   = (c: Conversation) => !activeLine || c.metaAccountId === activeLine;
+  const pending  = convs.filter(c => inLine(c) && isWaiting(c));
   const filtered = convs.filter(c => {
+    // Bandeja (línea) seleccionada
+    if (!inLine(c))                                     return false;
     // Tab filter
     if (tab === 'pending'  && !isWaiting(c))             return false;
     if (tab === 'resolved' && c.status !== 'RESOLVED')   return false;
@@ -316,6 +333,35 @@ export default function InboxPage() {
               </span>
             )}
           </div>
+
+          {/* Selector de bandeja (línea de WhatsApp) */}
+          {lines.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <button onClick={() => setActiveLine('')}
+                className={cn('w-full text-left px-3 py-2 rounded-xl text-[12px] font-bold border transition-all',
+                  !activeLine ? 'bg-[#0A6340] text-white border-[#0A6340]' : 'bg-white text-[#0C6F42] border-[#E3EDE7] hover:border-[#7FB79A]')}>
+                Todas las líneas
+              </button>
+              {lines.map(l => {
+                const count  = convs.filter(c => c.metaAccountId === l.id && isWaiting(c)).length;
+                const active = activeLine === l.id;
+                return (
+                  <button key={l.id} onClick={() => setActiveLine(l.id)}
+                    className={cn('w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-bold border transition-all',
+                      active ? 'bg-[#0A6340] text-white border-[#0A6340]' : 'bg-white text-[#0C6F42] border-[#E3EDE7] hover:border-[#7FB79A]')}>
+                    <span className="flex items-center gap-2 truncate">
+                      <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">{l.accountName || l.phoneNumber || 'Línea'}</span>
+                    </span>
+                    {count > 0 && (
+                      <span className={cn('min-w-[18px] h-[18px] text-[10px] font-black rounded-full flex items-center justify-center px-1',
+                        active ? 'bg-white/25 text-white' : 'bg-rose-500 text-white')}>{count}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Search */}
           <div className="relative">

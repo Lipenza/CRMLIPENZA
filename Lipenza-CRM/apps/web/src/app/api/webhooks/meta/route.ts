@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { markMessageRead } from '@/services/whatsapp';
+import { accountByPhoneNumberId, credsFromAccount } from '@/lib/meta-accounts';
 import { handleConfirmationButton } from '@/services/order-flow';
 import { attachMediaToMessage } from '@/services/media';
 import { describeIncoming } from '@/services/whatsapp-inbound';
@@ -60,10 +61,12 @@ async function processMetaEvent(body: any) {
       const value = change.value;
 
       if (value?.messages) {
+        // phone_number_id identifica a QUÉ línea de Lipenza llegó el mensaje.
+        const phoneNumberId = value?.metadata?.phone_number_id;
         for (const message of value.messages) {
           // Los errores se registran: tragárselos en silencio fue lo que dejó
           // mensajes en "[Mensaje sin texto]" sin rastro de qué había pasado.
-          await handleIncomingWhatsApp(message, value.contacts?.[0])
+          await handleIncomingWhatsApp(message, value.contacts?.[0], phoneNumberId)
             .catch(e => console.error('[Meta webhook] Entrante de WhatsApp:', e));
         }
       }
@@ -85,8 +88,10 @@ async function processMetaEvent(body: any) {
   }
 }
 
-async function handleIncomingWhatsApp(message: any, contact: any) {
+async function handleIncomingWhatsApp(message: any, contact: any, phoneNumberId?: string) {
   const phone = `+${message.from}`;
+  // Línea de Lipenza a la que llegó (Servicio al Cliente / Recompra / Logístico)
+  const account = await accountByPhoneNumberId(phoneNumberId);
   const info = describeIncoming(message);
   const { attachment } = info;
   let content = info.content;
@@ -125,13 +130,15 @@ async function handleIncomingWhatsApp(message: any, contact: any) {
     });
   }
 
+  // Conversación por LÍNEA: el mismo cliente en dos líneas distintas genera
+  // dos conversaciones separadas (cada una en su bandeja).
   let conversation = await prisma.conversation.findFirst({
-    where: { customerId: customer.id, channel: 'WHATSAPP', status: { not: 'RESOLVED' } },
+    where: { customerId: customer.id, channel: 'WHATSAPP', metaAccountId: account?.id ?? null, status: { not: 'RESOLVED' } },
   });
 
   if (!conversation) {
     conversation = await prisma.conversation.create({
-      data: { customerId: customer.id, channel: 'WHATSAPP', status: 'OPEN', lastMessageAt: new Date() },
+      data: { customerId: customer.id, channel: 'WHATSAPP', metaAccountId: account?.id ?? null, status: 'OPEN', lastMessageAt: new Date() },
     });
   } else {
     await prisma.conversation.update({ where: { id: conversation.id }, data: { lastMessageAt: new Date(), isRead: false } });
@@ -160,7 +167,7 @@ async function handleIncomingWhatsApp(message: any, contact: any) {
     }
   }
 
-  await markMessageRead(message.id).catch(() => {});
+  await markMessageRead(message.id, account ? credsFromAccount(account) : undefined).catch(() => {});
 
   // Botón de la plantilla de confirmación: responde y ramifica el flujo.
   if (info.quickReply) {
