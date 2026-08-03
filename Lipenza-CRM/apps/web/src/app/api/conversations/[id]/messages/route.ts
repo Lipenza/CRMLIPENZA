@@ -3,7 +3,7 @@ import { getAuthUser, unauthorized, forbidden } from '@/lib/auth-server';
 import { prisma } from '@/lib/prisma';
 import { sendWhatsAppMessage, sendWhatsAppTemplate } from '@/services/whatsapp';
 import { credsForAccount, pageCredsForAccount } from '@/lib/meta-accounts';
-import { sendPageMessage } from '@/services/messenger';
+import { sendPageMessage, sendInstagramMessage } from '@/services/messenger';
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const user = await getAuthUser(req);
@@ -71,7 +71,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       if (!page || !conversation.externalId) {
         throw new Error('Esta cuenta de Instagram/Facebook aún no está configurada para responder.');
       }
-      await sendPageMessage(page.pageId, page.token, conversation.externalId, content);
+      if (conversation.channel === 'INSTAGRAM') {
+        // API de Instagram: envío por graph.instagram.com/{ig-user-id}/messages
+        await sendInstagramMessage(page.pageId, page.token, conversation.externalId, content);
+      } else {
+        await sendPageMessage(page.pageId, page.token, conversation.externalId, content);
+      }
     } catch (e) {
       console.error('[Mensajes] Falló el envío por IG/FB:', e);
       sendError = e instanceof Error ? e.message : 'No se pudo enviar por Instagram/Facebook';
