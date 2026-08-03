@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+.env
+.env.local
+.env*.local
+.vercel
+prisma/generated/
+.DS_Store
+*.log
+pod
+*.tsbuildinfo
+.agents/
+.claude/
+skills-lock.json
+.vercel

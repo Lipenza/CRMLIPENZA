@@ -1,0 +1,158 @@
+/* ── Urbanist — tipografía web oficial Lipenza (Manual de Identidad, 3.2) ── */
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 150 22% 97%;
+    --foreground: 160 25% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 160 25% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 160 25% 12%;
+    --primary: 153 78% 27%;        /* Verde Vital #0F7D4B */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 150 30% 94%;
+    --secondary-foreground: 155 25% 20%;
+    --muted: 150 25% 94%;
+    --muted-foreground: 155 8% 45%;
+    --accent: 150 40% 90%;
+    --accent-foreground: 153 70% 25%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 150 18% 88%;
+    --input: 150 18% 88%;
+    --ring: 153 78% 27%;
+    --radius: 0.875rem;
+
+    /* Acentos de marca Lipenza */
+    --brand-bosque: #0A6340;
+    --brand-vital:  #0F7D4B;
+    --brand-solar:  #FFCC29;
+    --brand-energy: #F79633;
+    --brand-lima:   #A8CF45;
+
+    /* Channel colors */
+    --wa-bg: #E8F8F0;
+    --wa-text: #1A7A4A;
+    --wa-dot: #25D366;
+    --wa-border: #B7DFD0;
+
+    --ig-bg: #FDE8F4;
+    --ig-text: #9B2C6F;
+    --ig-dot: #E1306C;
+    --ig-border: #F4B8DC;
+
+    --fb-bg: #E7EFFE;
+    --fb-text: #1A4A9B;
+    --fb-dot: #1877F2;
+    --fb-border: #B3C8F8;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    background-color: #F6F9F7;
+    @apply text-foreground antialiased;
+    font-family: 'Urbanist', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Headings con Urbanist bold para jerarquía */
+  h1, h2 {
+    font-family: 'Urbanist', system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CFE3D8; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #0F7D4B; }
+
+/* ── Channel pills ── */
+.channel-wa { background: var(--wa-bg); color: var(--wa-text); border-color: var(--wa-border); }
+.channel-ig { background: var(--ig-bg); color: var(--ig-text); border-color: var(--ig-border); }
+.channel-fb { background: var(--fb-bg); color: var(--fb-text); border-color: var(--fb-border); }
+
+/* ── Chat bubbles ── */
+.bubble-in {
+  background: white;
+  border: 1px solid #E3EDE7;
+  border-radius: 16px 16px 16px 4px;
+  padding: 11px 15px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: #06241A;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+.bubble-out {
+  background: #0A6340;
+  color: #EEF6F1;
+  border-radius: 16px 16px 4px 16px;
+  padding: 11px 15px;
+  box-shadow: 0 1px 4px rgba(10,99,64,0.22);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+.bubble-internal {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  color: #78350F;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* ── Stat cards ── */
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: white;
+  border: 1px solid #E3EDE7;
+  padding: 20px;
+  transition: box-shadow 0.2s ease;
+}
+.stat-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+}
+
+/* ── Pipeline column ── */
+.pipeline-col { min-height: 60vh; }
+
+/* ── Pulse ── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(1.3); }
+}
+.pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+
+/* ── Slide up ── */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.slide-up { animation: slideUp 0.25s ease-out; }

@@ -1,0 +1,37 @@
+# ── Dependencias ──
+node_modules/
+**/node_modules/
+
+# ── Builds / Next.js ──
+.next/
+**/.next/
+out/
+**/out/
+build/
+dist/
+
+# ── Variables de entorno (NO subir secretos) ──
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+**/.env.*.local
+
+# ── Logs y temporales ──
+*.log
+npm-debug.log*
+.DS_Store
+
+# ── Prisma (cliente generado) ──
+**/node_modules/.prisma/
+
+# ── Plantilla original y material de marca pesado (no forman parte del CRM Lipenza) ──
+Dermafol-CRM-main/
+MANUAL LIPENZA*.pdf
+
+# ── Vercel ──
+.vercel
+
+# Config local de tooling
+.claude/settings.local.json
