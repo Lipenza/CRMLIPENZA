@@ -42,7 +42,9 @@
       "Bash(git add *)",
       "Bash(git commit -q -m 'CRM Lipenza: app Next.js con branding de marca + modo demo *)",
       "Bash(git branch *)",
-      "Bash(git remote *)"
+      "Bash(git remote *)",
+      "Bash(git ls-remote *)",
+      "Bash(echo \"credential.helper = $\\(git config --global credential.helper\\)\")"
     ]
   }
 }
