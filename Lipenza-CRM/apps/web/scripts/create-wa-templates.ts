@@ -76,7 +76,7 @@ const TEMPLATES: Tpl[] = [
     body: 'Hola {{1}} 💛 Tu descuento está a punto de vencer. Aprovecha el 10% + envío gratis para no detener tu proceso justo cuando está haciendo efecto.',
     examples: ['María'] },
   { name: 'ret_ultimo_recordatorio', category: 'MARKETING',
-    body: '{{1}} 🚨 Último recordatorio: tu Lipenza está por acabarse y queremos que sigas cuidando tu bienestar 💎 Haz tu recompra ahora con 10% de descuento + envío gratis. Válido por 24 horas.',
+    body: 'Hola {{1}} 🚨 Último recordatorio: tu Lipenza está por acabarse y queremos que sigas cuidando tu bienestar 💎 Haz tu recompra ahora con 10% de descuento + envío gratis. Válido por 24 horas.',
     examples: ['María'] },
   { name: 'ret_suscripcion', category: 'MARKETING',
     body: '¿Quieres olvidarte de pedir cada mes? 👉 Suscríbete con 1 clic y recibe tu producto automáticamente con un descuento especial de fidelidad 💖' },
@@ -89,7 +89,7 @@ const TEMPLATES: Tpl[] = [
     body: 'Hola {{1}} 💛 Sabemos que decidir no es fácil. Lipenza no es otro suplemento genérico de cúrcuma: trabaja desde adentro (inflamación) y desde afuera (movilidad y bienestar), justo donde empiezan las molestias articulares y musculares a partir de los 35-40. +1200 mujeres ya están en su ritual con Lipenza. Si tienes dudas, cuéntanos y te ayudamos a decidir con calma.',
     examples: ['María'] },
   { name: 'carrito_3', category: 'MARKETING',
-    body: '{{1}}, para que no se quede pendiente: te dejamos 10% de descuento + envío gratis en tu tratamiento Lipenza, válido las próximas 24 horas. 👉 {{2}} No queremos que dejes pausado el momento de empezar a cuidar tu bienestar 💛',
+    body: 'Hola {{1}}, para que no se quede pendiente: te dejamos 10% de descuento + envío gratis en tu tratamiento Lipenza, válido las próximas 24 horas. 👉 {{2}} No queremos que dejes pausado el momento de empezar a cuidar tu bienestar 💛',
     examples: ['María', 'https://lipenza.co/checkout/abc?desc=10'] },
 ];
 
