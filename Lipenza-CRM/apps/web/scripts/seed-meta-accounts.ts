@@ -56,7 +56,32 @@ async function main() {
     }
     done++;
   }
-  console.log(`\n${done} línea(s) de WhatsApp registrada(s) como bandejas.`);
+
+  // ── Instagram / Facebook (bandejas por canal) ──────────────────────────────
+  // FB:  accountId = page_id (id que manda el webhook)
+  // IG:  accountId = instagram_account_id (id que manda el webhook), pageId para enviar
+  const social = [
+    { channel: 'FACEBOOK'  as const, name: 'Facebook Messenger',  accountId: process.env.FB_PAGE_ID,     pageId: process.env.FB_PAGE_ID, instagramId: null,                         token: process.env.FB_TOKEN },
+    { channel: 'INSTAGRAM' as const, name: 'Instagram Directo',   accountId: process.env.IG_ACCOUNT_ID,  pageId: process.env.IG_PAGE_ID, instagramId: process.env.IG_ACCOUNT_ID,    token: process.env.IG_TOKEN },
+  ];
+  for (const s of social) {
+    if (!s.accountId || !s.token) {
+      console.log(`• ${s.name}: sin credenciales en .env — omitida`);
+      continue;
+    }
+    const existing = await prisma.metaAccount.findFirst({ where: { accountId: s.accountId, channel: s.channel } });
+    const data = { channel: s.channel, accountId: s.accountId, accountName: s.name, pageId: s.pageId ?? null, instagramId: s.instagramId ?? null, accessToken: s.token, isActive: true };
+    if (existing) {
+      await prisma.metaAccount.update({ where: { id: existing.id }, data });
+      console.log(`✓ ${s.name}: actualizada`);
+    } else {
+      await prisma.metaAccount.create({ data });
+      console.log(`✓ ${s.name}: creada`);
+    }
+    done++;
+  }
+
+  console.log(`\n${done} cuenta(s) registrada(s) como bandejas.`);
 }
 
 main()

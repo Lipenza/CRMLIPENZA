@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser, unauthorized, forbidden } from '@/lib/auth-server';
 import { prisma } from '@/lib/prisma';
 import { sendWhatsAppMessage, sendWhatsAppTemplate } from '@/services/whatsapp';
-import { credsForAccount } from '@/lib/meta-accounts';
+import { credsForAccount, pageCredsForAccount } from '@/lib/meta-accounts';
+import { sendPageMessage } from '@/services/messenger';
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const user = await getAuthUser(req);
@@ -55,6 +56,25 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     } catch (e) {
       console.error('[Mensajes] Falló el envío por WhatsApp:', e);
       sendError = e instanceof Error ? e.message : 'No se pudo enviar por WhatsApp';
+      message = await prisma.message.update({
+        where: { id: message.id },
+        data: { status: 'FAILED' },
+        include: { sentBy: { select: { id: true, name: true } } },
+      });
+    }
+  }
+
+  // Responder manual por Instagram DM / Facebook Messenger (desde la misma bandeja).
+  if (!isInternal && (conversation.channel === 'INSTAGRAM' || conversation.channel === 'FACEBOOK')) {
+    try {
+      const page = await pageCredsForAccount(conversation.metaAccountId);
+      if (!page || !conversation.externalId) {
+        throw new Error('Esta cuenta de Instagram/Facebook aún no está configurada para responder.');
+      }
+      await sendPageMessage(page.pageId, page.token, conversation.externalId, content);
+    } catch (e) {
+      console.error('[Mensajes] Falló el envío por IG/FB:', e);
+      sendError = e instanceof Error ? e.message : 'No se pudo enviar por Instagram/Facebook';
       message = await prisma.message.update({
         where: { id: message.id },
         data: { status: 'FAILED' },

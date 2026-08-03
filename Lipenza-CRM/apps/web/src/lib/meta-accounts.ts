@@ -39,3 +39,26 @@ export async function listWhatsAppAccounts() {
     select: { id: true, accountName: true, phoneNumber: true, channel: true },
   });
 }
+
+// ── Instagram / Facebook Messenger ──────────────────────────────────────────
+
+/** Encuentra la cuenta IG/FB por el id de la Página/IG que manda el webhook (entry.id). */
+export async function accountByPageId(pageId?: string | null) {
+  if (!pageId) return null;
+  return prisma.metaAccount.findFirst({
+    where: {
+      channel: { in: ['FACEBOOK', 'INSTAGRAM'] },
+      isActive: true,
+      OR: [{ accountId: pageId }, { pageId }, { instagramId: pageId }],
+    },
+  });
+}
+
+/** Credenciales para responder por Messenger/Instagram (Página + token). */
+export async function pageCredsForAccount(metaAccountId?: string | null): Promise<{ pageId: string; token: string } | undefined> {
+  if (!metaAccountId) return undefined;
+  const acc = await prisma.metaAccount.findUnique({ where: { id: metaAccountId } });
+  if (!acc || !acc.accessToken) return undefined;
+  const pageId = acc.pageId || acc.accountId;
+  return { pageId, token: acc.accessToken };
+}

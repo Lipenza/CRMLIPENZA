@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { markMessageRead } from '@/services/whatsapp';
-import { accountByPhoneNumberId, credsFromAccount } from '@/lib/meta-accounts';
+import { accountByPhoneNumberId, credsFromAccount, accountByPageId } from '@/lib/meta-accounts';
 import { handleConfirmationButton } from '@/services/order-flow';
 import { attachMediaToMessage } from '@/services/media';
 import { describeIncoming } from '@/services/whatsapp-inbound';
@@ -179,7 +179,10 @@ async function handleIncomingWhatsApp(message: any, contact: any, phoneNumberId?
 async function handleIncomingInstagramFacebook(messaging: any, pageId: string) {
   const senderId = messaging.sender.id;
   const content  = messaging.message?.text || '[Multimedia]';
-  const channel  = pageId === process.env.META_INSTAGRAM_ACCOUNT_ID ? 'INSTAGRAM' : 'FACEBOOK';
+  // Cuenta (bandeja) IG/FB dueña de esta Página; su canal define si es IG o Messenger.
+  const account  = await accountByPageId(pageId);
+  const channel  = account?.channel
+    ?? (pageId === process.env.META_INSTAGRAM_ACCOUNT_ID ? 'INSTAGRAM' : 'FACEBOOK');
 
   let customer = await prisma.customer.findFirst({ where: { phone: `ig_${senderId}` } });
   if (!customer) {
@@ -194,8 +197,10 @@ async function handleIncomingInstagramFacebook(messaging: any, pageId: string) {
 
   if (!conversation) {
     conversation = await prisma.conversation.create({
-      data: { customerId: customer.id, channel: channel as any, externalId: senderId, status: 'OPEN', lastMessageAt: new Date() },
+      data: { customerId: customer.id, channel: channel as any, metaAccountId: account?.id ?? null, externalId: senderId, status: 'OPEN', lastMessageAt: new Date() },
     });
+  } else {
+    await prisma.conversation.update({ where: { id: conversation.id }, data: { lastMessageAt: new Date(), isRead: false } });
   }
 
   await prisma.message.create({
