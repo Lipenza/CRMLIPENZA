@@ -16,12 +16,30 @@ const DAY = 86_400_000;
 
 const firstName = (name?: string | null) => (name || '').trim().split(/\s+/)[0] || '';
 
-/** Unidades compradas ≈ suma de cantidades de los items de la orden ancla (fallback 1).
- *  Nota: si tus productos codifican los meses en el nombre (ej. "Kit x3"), ajusta aquí. */
+/** Lee el tamaño del pack desde el texto de la variante/producto.
+ *  Shopify vende Lipenza por variantes: "Paquete x 1/2/3", "Paquete de 4 unidades".
+ *  También cubre "N frascos" / "N meses" (como aparece en la landing). 0 si no se detecta. */
+function packSize(text: string): number {
+  const s = (text || '').toLowerCase();
+  let m = s.match(/x\s*(\d+)/);                         // "paquete x 3", "kit x3"
+  if (m) return Number(m[1]);
+  m = s.match(/(\d+)\s*(unidad|frasco|mes)/);           // "4 unidades", "2 frascos", "3 meses"
+  if (m) return Number(m[1]);
+  return 0;
+}
+
+/** Unidades compradas = tamaño del pack de la orden ancla (× cantidad).
+ *  Los flujos cubren 1/2/3; un pack de 4+ recibe el de 3 meses (tope 3). */
 function unitsOf(order: any): number {
   const items = Array.isArray(order?.items) ? order.items : [];
-  const q = items.reduce((s: number, it: any) => s + (Number(it?.quantity) || 0), 0);
-  return q > 0 ? q : 1;
+  let total = 0;
+  for (const it of items) {
+    const text = [it?.name, it?.title, it?.variant, it?.variant_title, it?.variantTitle, it?.sku, it?.description]
+      .filter(Boolean).join(' ');
+    const per = packSize(text) || 1;                    // si no se detecta el pack, asume 1 por unidad
+    total += per * (Number(it?.quantity) || 1);
+  }
+  return total < 1 ? 1 : Math.min(total, 3);
 }
 
 /** Línea de WhatsApp por defecto para los envíos de retención (la primera activa). */
