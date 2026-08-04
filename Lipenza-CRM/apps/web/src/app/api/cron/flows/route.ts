@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processScheduled } from '@/services/order-flow';
+import { processRetention } from '@/services/retention';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -19,7 +20,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const result = await processScheduled();
-    return NextResponse.json({ ok: true, ...result });
+    const retencion = await processRetention();
+    return NextResponse.json({ ok: true, ...result, retencion });
   } catch (err: any) {
     console.error('[cron/flows]', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
