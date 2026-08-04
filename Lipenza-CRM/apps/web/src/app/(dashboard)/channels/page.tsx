@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { MessageSquare, Instagram, Facebook, Plus, CheckCircle2 } from 'lucide-react';
+import { MessageSquare, Instagram, Facebook, Plus, CheckCircle2, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 
 interface Channel {
@@ -23,12 +23,19 @@ export default function ChannelsPage() {
   const [loading, setLoading]   = useState(true);
   const connected = typeof window !== 'undefined' && new URLSearchParams(location.search).get('connected');
 
-  useEffect(() => {
+  function load() {
     api.get<{ data: Channel[] }>('/api/channels')
       .then(r => setChannels(r.data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }
+  useEffect(() => { load(); }, []);
+
+  async function remove(c: Channel) {
+    if (!confirm(`¿Desconectar "${c.accountName}"? Las conversaciones se conservan.`)) return;
+    await api.delete(`/api/channels/${c.id}`).catch(() => {});
+    load();
+  }
 
   return (
     <div className="h-full overflow-y-auto bg-[#F6F9F7]">
@@ -71,9 +78,15 @@ export default function ChannelsPage() {
                       <p className="font-bold text-[#0A6340] text-[15px] truncate">{c.accountName || cfg.label}</p>
                       <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: cfg.color }}>{cfg.label}</span>
                     </div>
-                    <span className={`ml-auto text-[11px] font-bold px-2 py-1 rounded-full ${c.isActive ? 'bg-[#E8F8F0] text-[#1A7A4A]' : 'bg-gray-100 text-gray-400'}`}>
-                      {c.isActive ? 'Activo' : 'Inactivo'}
-                    </span>
+                    <div className="ml-auto flex items-center gap-2">
+                      <span className={`text-[11px] font-bold px-2 py-1 rounded-full ${c.isActive ? 'bg-[#E8F8F0] text-[#1A7A4A]' : 'bg-gray-100 text-gray-400'}`}>
+                        {c.isActive ? 'Activo' : 'Inactivo'}
+                      </span>
+                      <button onClick={() => remove(c)} title="Desconectar"
+                        className="text-gray-300 hover:text-rose-500 transition-colors p-1 rounded-lg hover:bg-rose-50">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Perfil de Instagram (lo que la revisión de Meta pide mostrar) */}
