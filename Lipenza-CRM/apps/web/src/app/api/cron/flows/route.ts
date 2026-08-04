@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processScheduled } from '@/services/order-flow';
 import { processRetention } from '@/services/retention';
+import { processCartRecovery } from '@/services/cart-recovery';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -21,7 +22,8 @@ export async function GET(req: NextRequest) {
   try {
     const result = await processScheduled();
     const retencion = await processRetention();
-    return NextResponse.json({ ok: true, ...result, retencion });
+    const carritos = await processCartRecovery();
+    return NextResponse.json({ ok: true, ...result, retencion, carritos });
   } catch (err: any) {
     console.error('[cron/flows]', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
