@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   MessageSquare, Users, ShoppingBag, BarChart3, Zap,
-  FileText, LogOut, ShoppingCart
+  FileText, LogOut, ShoppingCart, AtSign
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { clearAuth, getUser, AuthUser } from '@/lib/auth';
@@ -20,6 +20,7 @@ const navItems = [
   { href: '/abandoned-carts', icon: ShoppingCart,  label: 'Carritos',   badge: 5 },
   { href: '/flows',           icon: Zap,           label: 'Flujos',     badge: 0 },
   { href: '/templates',       icon: FileText,      label: 'Plantillas', badge: 0 },
+  { href: '/channels',        icon: AtSign,        label: 'Cuentas',    badge: 0 },
 ];
 
 export function Sidebar() {
